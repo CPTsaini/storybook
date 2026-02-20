@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>स्याही और खामोशी</title>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Rozha+One&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper:  #f2e8d0;
+  --paper2: #e8dbbf;
+  --paper3: #ddd0ae;
+  --ink:    #1c0f00;
+  --sepia:  #7a4f1e;
+  --rust:   #9b3a1a;
+  --gold:   #b8861b;
+  --gold2:  #d4a940;
+  --bg:     #1a0800;
+}
+
+html, body { height: 100%; font-family: 'Tiro Devanagari Hindi', serif; }
+
+body {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 30px 12px 50px;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, #3d1800 0%, transparent 70%),
+    repeating-conic-gradient(#1a0800 0% 25%, #170600 0% 50%);
+  background-size: 100% 100%, 40px 40px;
+}
+
+/* ── Title Banner ── */
+.title-banner {
+  width: 100%; max-width: 660px;
+  text-align: center; margin-bottom: 14px;
+  animation: fadeDown 1s ease forwards; opacity: 0;
+}
+@keyframes fadeDown {
+  from { opacity:0; transform:translateY(-20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.title-banner .retro-label {
+  font-family:'Playfair Display',serif;
+  font-size:0.65rem; letter-spacing:8px;
+  color:var(--gold2); text-transform:uppercase;
+  margin-bottom:6px; opacity:0.7;
+}
+.title-banner h1 {
+  font-family:'Rozha One',serif;
+  font-size:clamp(1.8rem,6vw,3rem);
+  color:var(--gold2);
+  text-shadow:0 0 30px rgba(184,134,27,.5),3px 3px 0 rgba(0,0,0,.4);
+  letter-spacing:2px; line-height:1.2;
+}
+.banner-rule { display:flex; align-items:center; gap:10px; margin:10px 0; }
+.banner-rule span { flex:1; height:1px; background:linear-gradient(to right,transparent,var(--gold),transparent); }
+.banner-rule em { color:var(--gold2); font-style:normal; font-size:1rem; }
+.title-banner.hidden { display: none; }
+
+/* ── Book Stage ── */
+.book-stage {
+  perspective: 2000px;
+  width: 100%; max-width: 660px;
+  position: relative;
+}
+
+.book {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+}
+
+/* ── Paper surface ── */
+.page-spread {
+  background: var(--paper);
+  border-radius: 2px 10px 10px 2px;
+  padding: 44px 42px 72px;
+  position: relative;
+  min-height: 520px;
+  box-shadow:
+    -8px 0 0 var(--paper3),
+    -14px 0 0 var(--paper2),
+    -20px 4px 0 #c8b898,
+    -22px 6px 30px rgba(0,0,0,.6),
+    4px 4px 40px rgba(0,0,0,.4);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(122,79,30,.06) 31px, rgba(122,79,30,.06) 32px);
+  background-size: 200px 200px, 100% 32px;
+  background-position: 0 0, 0 44px;
+  overflow: hidden;
+}
+
+.page-spread::before {
+  content:''; position:absolute;
+  left:0; top:0; bottom:0; width:40px;
+  background:linear-gradient(to right,rgba(92,45,10,.18),transparent);
+  pointer-events:none; z-index:1;
+}
+.page-spread::after {
+  content:''; position:absolute;
+  bottom:0; right:0; width:50px; height:50px;
+  background:linear-gradient(135deg,var(--paper) 45%,var(--paper3) 46%,#b8a880 100%);
+  clip-path:polygon(100% 0,100% 100%,0 100%);
+  border-top-left-radius:4px;
+}
+
+/* ── FLIP OVERLAY ── */
+.flip-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  perspective: 1400px;
+  overflow: visible;
+}
+
+.flip-leaf {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  display: none;
+  border-radius: 2px 10px 10px 2px;
+}
+
+.flip-leaf.go-forward {
+  display: block;
+  animation: flipFwd 0.65s cubic-bezier(.45,0,.25,1) forwards;
+}
+.flip-leaf.go-back {
+  display: block;
+  animation: flipBwd 0.65s cubic-bezier(.45,0,.25,1) forwards;
+}
+
+@keyframes flipFwd {
+  0%   { transform:rotateY(0deg);    opacity:1; }
+  35%  { transform:rotateY(-70deg);  opacity:1; box-shadow:-30px 0 60px rgba(0,0,0,.35); }
+  100% { transform:rotateY(-180deg); opacity:0; }
+}
+@keyframes flipBwd {
+  0%   { transform:rotateY(-180deg); opacity:0; }
+  65%  { transform:rotateY(-70deg);  opacity:1; box-shadow:-30px 0 60px rgba(0,0,0,.35); }
+  100% { transform:rotateY(0deg);    opacity:1; }
+}
+
+.flip-front, .flip-back {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 2px 10px 10px 2px;
+  background: var(--paper2);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+}
+.flip-back { transform:rotateY(180deg); background:var(--paper3); }
+
+/* ── Page Content ── */
+.page-content {
+  position:relative; z-index:2;
+  animation: contentIn .35s ease .08s both;
+}
+@keyframes contentIn {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.chapter-eyebrow {
+  display:flex; align-items:center; gap:10px; margin-bottom:14px;
+}
+.chapter-eyebrow span {
+  font-family:'Playfair Display',serif;
+  font-size:.68rem; letter-spacing:5px;
+  text-transform:uppercase; color:var(--sepia); white-space:nowrap;
+}
+.chapter-eyebrow .rule { flex:1; height:1px; background:linear-gradient(to right,var(--gold),transparent); }
+
+.chapter-title {
+  font-family:'Rozha One',serif;
+  font-size:clamp(1.3rem,3.5vw,1.85rem);
+  color:var(--rust); line-height:1.3;
+  margin-bottom:22px;
+  text-shadow:1px 1px 0 rgba(0,0,0,.08);
+}
+
+.drop-cap-para {
+  font-size:clamp(1rem,2.4vw,1.12rem);
+  line-height:2.1; color:var(--ink);
+  margin-bottom:18px; text-align:justify;
+}
+.drop-cap-para::first-letter {
+  font-family:'Rozha One',serif;
+  font-size:3.6em; float:left;
+  line-height:.72; margin:8px 8px 0 0;
+  color:var(--rust);
+  text-shadow:2px 2px 0 rgba(155,58,26,.2);
+}
+
+.page-para {
+  font-size:clamp(1rem,2.4vw,1.12rem);
+  line-height:2.1; color:var(--ink);
+  margin-bottom:18px; text-align:justify;
+}
+
+.retro-quote {
+  margin:20px 0; padding:13px 18px 13px 24px;
+  border-left:4px double var(--gold);
+  border-right:1px solid rgba(184,134,27,.2);
+  font-style:italic; color:var(--sepia);
+  font-size:clamp(.98rem,2.3vw,1.1rem);
+  line-height:1.85; background:rgba(184,134,27,.07);
+  position:relative;
+}
+.retro-quote::before {
+  content:'❝'; position:absolute;
+  top:-10px; left:12px;
+  font-size:2rem; color:var(--gold2);
+  font-style:normal; opacity:.6; line-height:1;
+}
+
+.dialogue {
+  font-size:clamp(1rem,2.4vw,1.12rem);
+  line-height:2.1; color:var(--ink);
+  margin-bottom:18px; text-align:justify;
+  padding-left: 14px;
+  border-left: 2px solid rgba(155,58,26,.2);
+}
+
+.ornament {
+  text-align:center; color:var(--gold);
+  font-size:1.1rem; letter-spacing:8px;
+  margin:16px 0; opacity:.6;
+}
+
+/* ── Footer ── */
+.page-footer {
+  position:absolute; bottom:20px;
+  left:42px; right:42px;
+  display:flex; align-items:center; gap:12px; z-index:2;
+}
+.footer-rule { flex:1; height:1px; background:linear-gradient(to right,rgba(122,79,30,.25),rgba(122,79,30,.5),rgba(122,79,30,.25)); }
+.footer-page {
+  font-family:'Playfair Display',serif;
+  font-size:.72rem; color:var(--sepia); opacity:.7; white-space:nowrap;
+}
+
+/* ── Nav ── */
+.nav-row {
+  width:100%; max-width:660px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 4px 0; gap:12px;
+}
+.nav-btn {
+  background:transparent;
+  border:1px solid rgba(212,169,64,.35);
+  color:var(--gold2);
+  font-family:'Playfair Display',serif;
+  font-size:.78rem; letter-spacing:3px;
+  text-transform:uppercase; padding:9px 20px;
+  cursor:pointer; border-radius:2px; transition:all .2s;
+  position:relative; overflow:hidden;
+}
+.nav-btn::before {
+  content:''; position:absolute; inset:0;
+  background:rgba(212,169,64,.08);
+  transform:scaleX(0); transform-origin:left; transition:transform .2s;
+}
+.nav-btn:hover:not(:disabled)::before { transform:scaleX(1); }
+.nav-btn:hover:not(:disabled) { border-color:var(--gold2); }
+.nav-btn:disabled { opacity:.2; cursor:not-allowed; }
+
+.dots { display:flex; gap:9px; align-items:center; }
+.dot {
+  width:8px; height:8px; border-radius:50%;
+  background:rgba(212,169,64,.2);
+  border:1px solid rgba(212,169,64,.3);
+  cursor:pointer; transition:all .25s;
+}
+.dot.active {
+  background:var(--gold2); border-color:var(--gold2);
+  box-shadow:0 0 8px rgba(212,169,64,.5);
+  transform:scale(1.2);
+}
+
+/* ── Cover ── */
+.cover-page { text-align:center; padding:30px 20px; }
+.cover-border {
+  border:2px solid var(--gold); border-radius:4px;
+  padding:36px 24px; position:relative;
+}
+.cover-border::before,.cover-border::after {
+  content:'✦'; position:absolute;
+  color:var(--gold2); font-size:1.4rem;
+  background:var(--paper); padding:0 8px;
+}
+.cover-border::before { top:-14px; left:50%; transform:translateX(-50%); }
+.cover-border::after  { bottom:-14px; left:50%; transform:translateX(-50%); }
+.cover-corner { position:absolute; width:20px; height:20px; border-color:var(--gold); border-style:solid; opacity:.6; }
+.cover-corner.tl { top:6px; left:6px; border-width:2px 0 0 2px; }
+.cover-corner.tr { top:6px; right:6px; border-width:2px 2px 0 0; }
+.cover-corner.bl { bottom:6px; left:6px; border-width:0 0 2px 2px; }
+.cover-corner.br { bottom:6px; right:6px; border-width:0 2px 2px 0; }
+.cover-top-label {
+  font-family:'Playfair Display',serif;
+  font-size:.65rem; letter-spacing:7px;
+  color:var(--sepia); text-transform:uppercase; margin-bottom:20px;
+}
+.cover-main-title {
+  font-family:'Rozha One',serif;
+  font-size:clamp(2rem,7vw,3.2rem);
+  color:var(--rust); line-height:1.2; margin-bottom:10px;
+  text-shadow:2px 2px 0 rgba(155,58,26,.15);
+}
+.cover-main-sub {
+  font-size:1rem; color:var(--sepia);
+  margin-bottom:24px; font-style:italic; line-height:1.7;
+}
+.cover-divider { display:flex; align-items:center; gap:10px; margin:20px 0; }
+.cover-divider span { flex:1; height:1px; background:var(--gold); opacity:.4; }
+.cover-divider em { color:var(--gold2); font-style:normal; font-size:1.2rem; letter-spacing:4px; }
+.cover-place {
+  font-size:.75rem; letter-spacing:5px;
+  text-transform:uppercase; color:var(--sepia); opacity:.55; margin-bottom:16px;
+}
+.cover-author-by {
+  font-size:.7rem; letter-spacing:5px;
+  text-transform:uppercase; color:var(--sepia); opacity:.6; margin-bottom:4px;
+}
+.cover-author-name {
+  font-family:'Playfair Display',serif;
+  font-style:italic; font-size:1.2rem; color:var(--gold);
+}
+
+@media(max-width:500px){
+  .page-spread { padding:30px 20px 62px; min-height:460px; }
+  .page-footer  { left:20px; right:20px; }
+  .cover-border { padding:24px 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="title-banner" id="titleBanner">
+  <div class="retro-label">— देहरादून की एक शाम —</div>
+  <h1>स्याही और खामोशी</h1>
+  <div class="banner-rule"><span></span><em>✦ ✦ ✦</em><span></span></div>
+</div>
+
+<div class="book-stage">
+  <div class="book">
+    <div class="page-spread" id="pageSpread">
+      <div class="flip-container" id="flipContainer">
+        <div class="flip-leaf" id="flipLeaf">
+          <div class="flip-front"></div>
+          <div class="flip-back"></div>
+        </div>
+      </div>
+      <div class="page-content" id="pageContent"></div>
+      <div class="page-footer">
+        <span class="footer-rule"></span>
+        <span class="footer-page" id="footerPage"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="nav-row">
+  <button class="nav-btn" id="prevBtn" onclick="changePage(-1)" disabled>◀ पिछला</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" onclick="changePage(1)">अगला ▶</button>
+</div>
+
+<script>
+const AUTHOR = "Himanshu";
+
+const PAGES = [
+  // ── Cover ──
+  {
+    type: "cover",
+    html: `
+      <div class="cover-page">
+        <div class="cover-border">
+          <div class="cover-corner tl"></div><div class="cover-corner tr"></div>
+          <div class="cover-corner bl"></div><div class="cover-corner br"></div>
+          <div class="cover-top-label">एक प्रेम कहानी</div>
+          <div class="cover-main-title">स्याही<br/>और<br/>खामोशी</div>
+          <div class="cover-main-sub">देहरादून की मखमली शाम में<br/>लिखी एक अधूरी दास्तान</div>
+          <div class="cover-divider"><span></span><em>❧ ❧ ❧</em><span></span></div>
+          <div class="cover-place">राजपुर रोड · देहरादून</div>
+          <div class="cover-author-by">लेखक</div>
+          <div class="cover-author-name">Himanshu</div>
+        </div>
+      </div>`,
+    pageLabel: ""
+  },
+
+  // ── Page 1 ──
+  {
+    type: "chapter",
+    chapter: "पहला पन्ना",
+    title: "एक कोना, एक चेहरा",
+    html: `
+      <p class="drop-cap-para">धूप अभी ढली नहीं थी, लेकिन मेरा दिल ढलने की जल्दी में था। देहरादून की उस मखमली शाम में राजपुर रोड के एक पुराने कैफ़े की खिड़की के पास मैं बैठा था। यह मेरा और उसका पसंदीदा कोना बन चुका था।</p>
+      <p class="page-para">दरअसल, मैं हर रविवार इसी कैफ़े में आता था — सिर्फ़ उसे देखने। कई हफ़्तों तक यह सिलसिला यूँ ही चला। वह आती, अपनी किताबों के ढेर में खो जाती और मैं अपनी डायरी लेकर उसे काग़ज़ों पर उतारने की नाकाम कोशिश करता।</p>
+      <p class="page-para">मैंने ग़ौर किया था कि वह अपनी किताबों से नज़रें हटाए बिना भी, शायद मुझे नोटिस कर रही थी। लड़कियों की वह 'सेवंथ सेंस' वाक़ई कमाल की होती है — उन्हें पता चल जाता है कि कोई उन्हें किस नज़र से देख रहा है।</p>
+      <div class="ornament">✦ ✦ ✦</div>
+      <p class="page-para">काफ़ी रविवार इसी कशमकश में गुज़र गए। फिर एक दोपहर मैंने एक रास्ता निकाला। मुझे पता था कि उसे किताबों का बेहद शौक़ है और मेरा जुनून 'लिखना' था। मैंने एक कोरे काग़ज़ पर अपने कुछ अधूरे ख़याल और एक छोटी-सी कविता उतारी। कविता के अंत में बस एक लाइन लिखी —</p>
+      <div class="retro-quote">"क्या हर कहानी का अंत स्याही से ही होना ज़रूरी है, या कुछ जवाब ख़ामोशी में भी मिल सकते हैं?"</div>`,
+    pageLabel: "पृष्ठ १"
+  },
+
+  // ── Page 2 ──
+  {
+    type: "chapter",
+    chapter: "दूसरा पन्ना",
+    title: "पहली बातचीत",
+    html: `
+      <p class="drop-cap-para">काँपते हाथों से मैंने वह काग़ज़ उसकी मेज़ पर रखा और अपनी जगह पर आकर बैठ गया। अगले रविवार जब मैं पहुँचा, तो उसने ख़ुद पहल की। उसने अपनी मेज़ की तरफ़ इशारा किया और हमारी पहली बातचीत शुरू हुई।</p>
+      <p class="page-para">बिना किसी फ़ोन नंबर या वादे के, हम बस उस एक दिन और उस एक जगह के भरोसे जुड़ गए थे। खिड़की के बाहर सिल्वर ओक के पत्तों से छनकर आती सुनहरी रोशनी सीधे उसकी आँखों में उतर रही थी। उसके सामने बैठे रहना दुनिया का सबसे ख़ूबसूरत एहसास था — उसकी बातें, उसका हाथ हिलाने का अंदाज़, सब कुछ।</p>
+      <div class="ornament">— ❦ —</div>
+      <p class="page-para">उसी दौरान, एक दिन उसने अपनी एक बहुत पुरानी और पसंदीदा किताब मुझे थमाई।</p>
+      <div class="retro-quote">"इसे पूरा पढ़ना," उसने जाते-जाते कहा था, "अगर आख़िरी पन्ने तक पहुँच गए, तो तुम्हें समझ आ जाएगा कि मैं तुम्हारे बारे में क्या महसूस करती हूँ। मेरी ख़ामोशी का जवाब उन आख़िरी पन्नों में ही छिपा है।"</div>`,
+    pageLabel: "पृष्ठ २"
+  },
+
+  // ── Page 3 ──
+  {
+    type: "chapter",
+    chapter: "तीसरा पन्ना",
+    title: "एक डर और एक भागना",
+    html: `
+      <p class="drop-cap-para">हफ़्तों बीत गए। किताब मेरे बैग के एक कोने में पड़ी रही। मैं उसे पढ़ना तो चाहता था, पर जैसे ही पहला पन्ना पलटता, मेरा मन अपनी ही कहानियों में खो जाता।</p>
+      <p class="page-para">कुछ दिन बाद, उस रविवार जब हम फिर से मिले, तो फ़िज़ाओं में मसूरी की पहाड़ियों से उतरती एक अजीब-सी ठंडक थी। कैफ़े के बाहर लगे लीची के पेड़ों की शाखें हवा में झूम रही थीं। मुलाक़ात के बीच मेरा दिमाग़ चकरा रहा था, क्योंकि मुझे डर था कि वह पूछ न ले।</p>
+      <p class="page-para">साइकोलॉजी की मैग़ज़ीन्स में पढ़ा था कि जब आप किसी सिचुएशन से भागना चाहते हैं, तो शरीर के संकेत बदल जाते हैं। मैंने अनजाने में वही किया — हाथ मोड़ लिए, पैर जोड़ लिए। जैसे ही उसका ध्यान हटा, मैं वहाँ से भागा।</p>
+      <div class="retro-quote">दिक्कत यह थी कि उसकी वह किताब हफ़्तों से मेरे बैग में धूल खा रही थी।</div>`,
+    pageLabel: "पृष्ठ ३"
+  },
+
+  // ── Page 4 ──
+  {
+    type: "chapter",
+    chapter: "चौथा पन्ना",
+    title: "देहरादून की बारिश",
+    html: `
+      <p class="drop-cap-para">फिर एक शाम — जब मैं ऑफ़िस से सीधा रेलवे स्टेशन की तरफ़ भाग रहा था ताकि वक़्त पर ट्रेन पकड़ सकूँ — देहरादून का मौसम अचानक अपनी चिर-परिचित मनमर्ज़ी पर उतर आया।</p>
+      <p class="page-para">घंटाघर के पीछे से काली घटाएँ उतरीं और देखते ही देखते मूसलाधार बारिश शुरू हो गई। दून की वह बारिश, जिसे आप कभी भाँप नहीं सकते — जो कुछ ही मिनटों में सड़कों को दरिया बना देती है और हवा में मिट्टी और जकरंडा के भीगे फूलों की मिली-जुली महक भर देती है।</p>
+      <p class="page-para">मेरे पास छाता नहीं था। मैं भीगता हुआ स्टेशन की पुरानी इमारत के नीचे पहुँचा, जहाँ गीली पटरियों की वह तीखी सोंधी महक और ठंडी हवा फैली थी। मैं यह भूल ही गया कि बैग में उसकी 'अमानत' रखी है।</p>
+      <p class="page-para">जब घर पहुँचकर किताब निकाली, तो मेरा दिल बैठ गया। किताब का पिछला हिस्सा बारिश में पूरी तरह गल चुका था। स्याही ऐसे फैली थी जैसे किसी ने मेरी तक़दीर पर नीली कालिख पोत दी हो।</p>`,
+    pageLabel: "पृष्ठ ४"
+  },
+
+  // ── Page 5 ──
+  {
+    type: "chapter",
+    chapter: "पाँचवाँ पन्ना",
+    title: "एक लेखक का जवाब",
+    html: `
+      <p class="drop-cap-para">उस पूरी रात मैं सो नहीं पाया। बाहर बारिश की बूंदें टीन की छत पर शोर कर रही थीं और अंदर मेरे दिल में एक तूफ़ान था। कमरे की पीली रोशनी में मैंने घंटों उस किताब को निहारा। क्या एक लेखक इतना भी कमज़ोर हो सकता है कि अपनी ही कहानी का अंत न बचा सके?</p>
+      <p class="page-para">तड़के सुबह, जब दून की घाटी पर हल्की धुंध छाई थी, मैंने एक पेन उठाया और उन भीगे हुए, कड़े हो चुके पन्नों पर अपनी क़लम चलाना शुरू किया।</p>
+      <p class="page-para">मैंने उस किताब का अंत अपने अंदाज़ में लिखा। मैंने उन ख़ाली पन्नों पर वह सब लिख दिया, जो मैं उसके बारे में महसूस करता था — वह बर्मन साहब के गानों जैसी पुरानी मोहब्बत, वह डर, वह बारिश और वह सच कि मुझे पढ़ना नहीं, सिर्फ़ उसके लिए लिखना पसंद है।</p>
+      <div class="ornament">✦ ✦ ✦</div>`,
+    pageLabel: "पृष्ठ ५"
+  },
+
+  // ── Page 6 ──
+  {
+    type: "chapter",
+    chapter: "छठा पन्ना",
+    title: "भीगे पन्ने, सच्ची बात",
+    html: `
+      <p class="drop-cap-para">अगले रविवार जब मैं उसे वह किताब लौटाने गया, तो चुपचाप खड़ा रहा। उसने किताब ली, उन भीगे और सख़्त हो चुके पन्नों को देखा और फिर मेरी लिखी पंक्तियों पर उँगली फेरी।</p>
+      <div class="retro-quote">"तुमने मेरा लिखा हुआ तो मिटा दिया," उसने किताब बंद करते हुए कहा, "पर अपनी सच्चाई लिख दी। शायद हम दोनों के बीच यही एक चीज़ साफ़ थी — कि तुम्हें मेरी बातें सुननी पसंद थीं और मुझे तुम्हारा ख़ामोश रहकर लिखना।"</div>
+      <p class="page-para">वह मुस्कुराकर जाने के लिए उठी, अपना बैग सँभाला और कैफ़े के दरवाज़े तक पहुँच गई। उस वक़्त मुझे लगा कि बस, सब ख़त्म हो गया। मेरे अंदर एक अजीब-सा सन्नाटा छा गया — क्योंकि मैं जानता था कि मेरे पास उसका कोई पता नहीं है।</p>
+      <p class="page-para">उसका यूँ मुड़कर चले जाना मेरे लिए इस कहानी का आख़िरी 'The End' था।</p>
+      <div class="ornament">— ❦ —</div>`,
+    pageLabel: "पृष्ठ ६"
+  },
+
+  // ── Page 7 ──
+  {
+    type: "chapter",
+    chapter: "आख़िरी पन्ना",
+    title: "मसूरी का एक पता",
+    html: `
+      <p class="drop-cap-para">लेकिन अचानक वह रुकी — पीछे मुड़ी और मेरी आँखों में देखकर धीरे से मुस्कुराई। फिर उसने कैफ़े के एक पुराने बिल के पीछे कुछ लिखकर मेज़ पर छोड़ दिया।</p>
+      <div class="retro-quote">"वैसे, देहरादून की बारिश में किताबें ही नहीं, इरादे भी भीग जाते हैं," उसने मज़ाक़ भरे अंदाज़ में कहा। "अगले महीने मसूरी में एक राइटर्स फ़ेस्ट है। मैं वहाँ जा रही हूँ... और सुना है वहाँ पुरानी किताबों के स्टॉल भी लगते हैं। मैं चाहती हूँ कि तुम वह नई किताब ख़रीदो और उसके आख़िरी ख़ाली पन्नों को लेकर मेरे पास आओ। इस बार जो मिट गया है, उसे मैं तुम्हारे सामने फिर से लिखूँगी... ताकि तुम उसे पढ़ते वक़्त भाग न सको। और हाँ, इस बार छाता साथ रखना — क्योंकि मेरा अभी तुम्हें अलविदा कहने का मन नहीं है।"</div>
+      <p class="page-para">वह भीड़ में ओझल हो गई, पर मेरे हाथ में कैफ़े का वह बिल रह गया, जिसके पीछे उसने मसूरी का एक पता लिखा था।</p>
+      <p class="page-para" style="text-align:center; font-style:italic; color:var(--sepia); margin-top:10px;">पहाड़ों पर जमी धुंध धीरे-धीरे छँट रही थी, पर मेरी कहानी में एक नया मोड़ अभी बाक़ी था।</p>
+      <div class="ornament">— समाप्त —</div>`,
+    pageLabel: "पृष्ठ ७"
+  }
+];
+
+let current = 0, animating = false;
+
+function buildDots() {
+  const c = document.getElementById('dots');
+  c.innerHTML = '';
+  PAGES.forEach((_,i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i===0?' active':'');
+    d.setAttribute('aria-label', 'पृष्ठ ' + (i+1));
+    d.onclick = () => goTo(i);
+    c.appendChild(d);
+  });
+}
+
+function renderPage(index) {
+  const p = PAGES[index];
+  const content = document.getElementById('pageContent');
+  const banner = document.getElementById('titleBanner');
+  let html = p.type === 'cover' ? p.html :
+    `<div class="chapter-eyebrow"><span>${p.chapter}</span><span class="rule"></span></div>
+     <h2 class="chapter-title">${p.title}</h2>${p.html}`;
+  content.innerHTML = html;
+  content.style.animation = 'none';
+  void content.offsetWidth;
+  content.style.animation = 'contentIn .35s ease .08s both';
+  // Show banner only on cover page
+  banner.style.display = (index === 0) ? '' : 'none';
+  document.getElementById('footerPage').textContent = p.pageLabel || '';
+  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===index));
+  document.getElementById('prevBtn').disabled = index===0;
+  document.getElementById('nextBtn').disabled = index===PAGES.length-1;
+}
+
+function goTo(index) {
+  if (animating || index===current || index<0 || index>=PAGES.length) return;
+  animating = true;
+  const leaf = document.getElementById('flipLeaf');
+  leaf.className = 'flip-leaf ' + (index > current ? 'go-forward' : 'go-back');
+  setTimeout(() => { current = index; renderPage(current); }, 300);
+  setTimeout(() => { leaf.className = 'flip-leaf'; animating = false; }, 700);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function changePage(dir) { goTo(current + dir); }
+
+document.addEventListener('keydown', e => {
+  if (e.key==='ArrowRight') changePage(1);
+  if (e.key==='ArrowLeft')  changePage(-1);
+});
+
+let tx = 0;
+document.addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
+document.addEventListener('touchend', e => {
+  const d = tx - e.changedTouches[0].clientX;
+  if (Math.abs(d) > 50) changePage(d > 0 ? 1 : -1);
+});
+
+buildDots();
+renderPage(0);
+</script>
+</body>
+</html>
